@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulador da Pesquisa de Satisfação</title>
+  <!-- Tailwind CSS para estilização rápida -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Biblioteca de ícones Lucide -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Biblioteca de Confete para comemoração -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <!-- Fontes do Google -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;550;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    .fade-in-up {
+      animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .emoji-btn {
+      transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .emoji-btn:hover { transform: scale(1.15); }
+    .emoji-btn:active { transform: scale(0.95); }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col justify-between">
+
+  <!-- AVISO DE SIMULAÇÃO (Top Bar) -->
+  <div id="sim-banner" class="bg-brand-500 bg-emerald-600 text-white px-4 py-2 text-center text-xs font-semibold flex items-center justify-between shadow-md">
+    <span>✨ <strong>Modo Simulador Interativo:</strong> Dê dois cliques neste arquivo no seu computador para ver o site funcionar na hora sem instalar nada!</span>
+    <button onclick="document.getElementById('sim-banner').style.display='none'" class="hover:bg-emerald-700 p-1 rounded transition">✕</button>
+  </div>
+
+  <div class="w-full max-w-md mx-auto px-4 py-8 flex-grow flex flex-col justify-between min-h-[90vh]">
+    
+    <!-- CABEÇALHO DO RESTAURANTE -->
+    <header class="text-center mb-6">
+      <div class="inline-block relative">
+        <div class="w-28 h-28 mx-auto rounded-2xl overflow-hidden border-2 border-emerald-500 shadow-md bg-white flex items-center justify-center">
+          <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=120&h=120&fit=crop&q=80" alt="Logo" class="w-full h-full object-cover">
+        </div>
+        <span class="absolute -bottom-1 -right-1 bg-emerald-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider">Opinar</span>
+      </div>
+      <h1 class="mt-3 text-2xl font-bold tracking-tight text-slate-800">Sabores & Aromas</h1>
+    </header>
+
+    <!-- TELA 1: BOAS VINDAS -->
+    <main id="step-welcome" class="flex-grow flex items-center justify-center my-4 fade-in-up">
+      <div class="w-full bg-white rounded-3xl p-6 shadow-xl border border-slate-100">
+        <div class="text-center mb-6">
+          <span class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 mb-3">
+            <i data-lucide="sparkles" class="w-6 h-6 animate-pulse"></i>
+          </span>
+          <h2 class="text-xl font-bold text-slate-900 leading-tight">Sua opinião é muito importante!</h2>
+          <p class="text-sm text-slate-500 mt-2">Ajude-nos a melhorar sua experiência. Leva menos de 1 minuto.</p>
+        </div>
+
+        <div class="space-y-5">
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-2">Seu Nome (Opcional)</label>
+            <input id="client-name" type="text" placeholder="Digite seu nome (ex: João)..." class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition text-slate-800 bg-slate-50/50">
+          </div>
+
+          <button onclick="startSurvey()" class="w-full bg-emerald-500 hover:bg-emerald-600 active:scale-[0.99] text-white font-semibold py-3.5 px-6 rounded-xl shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 text-base">
+            Iniciar Pesquisa 🚀
+          </button>
+        </div>
+      </div>
+    </main>
+
+    <!-- TELA 2: CARD DE PERGUNTAS -->
+    <main id="step-questions" class="flex-grow flex items-center justify-center my-4 hidden fade-in-up">
+      <div class="w-full bg-white rounded-3xl p-6 shadow-xl border border-slate-100">
+        
+        <div class="flex items-center justify-between mb-6">
+          <button onclick="goBack()" class="inline-flex items-center justify-center p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition">
+            <i data-lucide="arrow-left" class="w-5 h-5"></i>
+          </button>
+          <div class="text-right">
+            <span id="question-progress-text" class="text-xs font-semibold text-emerald-600">Etapa 1 de 4</span>
+            <div class="w-24 bg-slate-100 h-1.5 rounded-full mt-1 overflow-hidden">
+              <div id="question-progress-bar" class="bg-emerald-500 h-full transition-all duration-300" style="width: 25%"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="text-center my-6">
+          <h3 id="question-title" class="text-xl font-bold text-slate-900 px-2 leading-snug">Como foi o seu atendimento hoje?</h3>
+        </div>
+
+        <div id="options-container" class="grid grid-cols-3 gap-4 mt-6">
+          <!-- Botões serão inseridos dinamicamente aqui -->
+        </div>
+      </div>
+    </main>
+
+    <!-- TELA 3: COMENTÁRIOS -->
+    <main id="step-comment" class="flex-grow flex items-center justify-center my-4 hidden fade-in-up">
+      <div class="w-full bg-white rounded-3xl p-6 shadow-xl border border-slate-100">
+        <div class="flex items-center justify-between mb-4">
+          <button onclick="goBack()" class="inline-flex items-center justify-center p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition">
+            <i data-lucide="arrow-left" class="w-5 h-5"></i>
+          </button>
+          <span class="text-xs font-semibold text-emerald-600">Comentários</span>
+        </div>
+
+        <div class="mb-4">
+          <h3 class="text-lg font-bold text-slate-900 leading-tight">Deseja deixar alguma sugestão ou elogio? (Opcional)</h3>
+          <p class="text-xs text-slate-400 mt-1">Escreva abaixo o que você achou do restaurante ou sugestões.</p>
+        </div>
+
+        <div class="space-y-4">
+          <textarea id="client-comment" rows="4" placeholder="Escreva seu feedback aqui..." class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition text-slate-800 bg-slate-50/50 text-sm resize-none"></textarea>
+          <button onclick="submitSurvey()" class="w-full bg-emerald-500 hover:bg-emerald-600 active:scale-[0.99] text-white font-semibold py-3.5 px-6 rounded-xl shadow-lg shadow-emerald-500/10 transition-all flex items-center justify-center gap-2 text-base">
+            Enviar Pesquisa <i data-lucide="send" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+    </main>
+
+    <!-- TELA 4: AGRADECIMENTO -->
+    <main id="step-success" class="flex-grow flex items-center justify-center my-4 hidden fade-in-up">
+      <div class="w-full bg-white rounded-3xl p-6 shadow-xl border border-slate-100 text-center py-8">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-50 text-emerald-500 mb-6 scale-110">
+          <i data-lucide="check-circle-2" class="w-10 h-10 stroke-[2.5]"></i>
+        </div>
+        <h2 class="text-2xl font-bold text-slate-900 leading-tight">Muito Obrigado!</h2>
+        <p class="text-sm text-slate-500 mt-3 px-2 leading-relaxed">Sua resposta foi enviada com sucesso! Agradecemos o seu tempo e preferência.</p>
+        <button onclick="resetSurvey()" class="mt-8 inline-flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-semibold py-2.5 px-6 rounded-xl transition-all text-sm">
+          <i data-lucide="refresh-cw" class="w-4 h-4"></i> Responder Novamente
+        </button>
+      </div>
+    </main>
+
+    <!-- TELA 5: LOGIN DO ADMIN -->
+    <main id="step-admin-login" class="flex-grow flex items-center justify-center my-4 hidden fade-in-up">
+      <div class="w-full bg-white rounded-3xl p-6 shadow-xl border border-slate-100">
+        <button onclick="exitAdmin()" class="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-600 mb-6 transition">
+          <i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar para a pesquisa
+        </button>
+        <div class="text-center mb-6">
+          <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 mb-3">
+            <i data-lucide="lock" class="w-6 h-6"></i>
+          </div>
+          <h2 class="text-xl font-bold text-slate-900 leading-tight">Acesso Administrador</h2>
+          <p class="text-xs text-slate-400 mt-1">Digite a senha de administrador.</p>
+        </div>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">Senha de Acesso</label>
+            <input id="admin-pass" type="password" placeholder="Digite admin123..." class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition text-slate-800 bg-slate-50/50">
+          </div>
+          <p id="login-error" class="text-xs text-red-600 bg-red-50 p-2.5 rounded-lg border border-red-100 font-medium hidden">Senha incorreta! Tente admin123.</p>
+          <button onclick="tryLogin()" class="w-full bg-slate-800 hover:bg-slate-900 active:scale-[0.99] text-white font-semibold py-3 px-6 rounded-xl transition-all shadow-md text-sm">
+            Entrar no Painel
+          </button>
+        </div>
+      </div>
+    </main>
+
+    <!-- TELA 6: DASHBOARD ADMIN (Apenas visível se logado) -->
+    <main id="step-admin-dashboard" class="flex-grow my-4 hidden fade-in-up">
+      <div class="w-full bg-white rounded-3xl p-6 shadow-xl border border-slate-100 space-y-6 max-w-2xl mx-auto">
+        <!-- Topo Dashboard -->
+        <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+          <div>
+            <span class="bg-emerald-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Painel Admin</span>
+            <h2 class="text-xl font-bold text-slate-900 mt-1">Dados & Opiniões</h2>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="downloadCSV()" class="flex items-center gap-1 bg-emerald-500 hover:bg-emerald-600 text-white py-2 px-3 rounded-xl text-xs font-semibold shadow-md transition">
+              <i data-lucide="download" class="w-4 h-4"></i> Excel (CSV)
+            </button>
+            <button onclick="exitAdmin()" class="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition">
+              <i data-lucide="log-out" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Métricas Rápidas -->
+        <div class="grid grid-cols-3 gap-3">
+          <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100 text-center">
+            <span class="text-[10px] font-bold text-slate-400 uppercase">Total</span>
+            <span id="stat-total" class="text-2xl font-extrabold text-slate-950 block">4</span>
+          </div>
+          <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100 text-center">
+            <span class="text-[10px] font-bold text-slate-400 uppercase">Voltariam</span>
+            <span id="stat-return" class="text-2xl font-extrabold text-emerald-600 block">75%</span>
+          </div>
+          <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100 text-center">
+            <span class="text-[10px] font-bold text-slate-400 uppercase">Satisfação</span>
+            <span id="stat-sat" class="text-2xl font-extrabold text-yellow-600 block">100%</span>
+          </div>
+        </div>
+
+        <!-- Gráficos de Respostas -->
+        <div class="space-y-4">
+          <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Resumo de Atendimento (🙁 | 😐 | 😊)</h4>
+          <div class="space-y-2 bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
+            <div>
+              <div class="flex justify-between text-xs font-semibold text-slate-600 mb-1">
+                <span>😊 Excelente</span>
+                <span id="chart-exc">2 votos (50%)</span>
+              </div>
+              <div class="w-full bg-slate-150 bg-slate-200 h-2 rounded-full overflow-hidden">
+                <div id="bar-exc" class="bg-emerald-500 h-full" style="width: 50%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs font-semibold text-slate-600 mb-1">
+                <span>😐 Regular</span>
+                <span id="chart-reg">2 votos (50%)</span>
+              </div>
+              <div class="w-full bg-slate-150 bg-slate-200 h-2 rounded-full overflow-hidden">
+                <div id="bar-reg" class="bg-emerald-500 h-full" style="width: 50%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs font-semibold text-slate-600 mb-1">
+                <span>🙁 Ruim</span>
+                <span id="chart-ruim">0 votos (0%)</span>
+              </div>
+              <div class="w-full bg-slate-150 bg-slate-200 h-2 rounded-full overflow-hidden">
+                <div id="bar-ruim" class="bg-emerald-500 h-full" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lista de Respostas (Tabela) -->
+        <div class="space-y-3">
+          <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Opiniões Individuais</h4>
+          <div id="table-container" class="space-y-3 max-h-48 overflow-y-auto pr-1">
+            <!-- Dados de opiniões gerados em tempo real -->
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- RODAPÉ -->
+    <footer class="text-center pt-4 border-t border-slate-100 flex items-center justify-center text-xs text-slate-400">
+      <span>&copy; 2026 Sabores & Aromas</span>
+    </footer>
+  </div>
+
+  <script>
+    // Inicializar ícones Lucide
+    lucide.createIcons();
+
+    // Banco de Dados fictício na memória local da página para simulação rápida
+    let mockData = [
+      { id: 1, created_at: new Date(Date.now() - 3600000*3).toISOString(), cliente_nome: "Maria Oliveira", pergunta_atendimento: "Excelente", pergunta_comida: "Incrível!", pergunta_ambiente: "Impecável!", pergunta_retorno: "Com certeza!", comentario: "A lasanha estava divina! Atendimento nota 10." },
+      { id: 2, created_at: new Date(Date.now() - 3600000*2).toISOString(), cliente_nome: "Carlos Souza", pergunta_atendimento: "Regular", pergunta_comida: "Gostei", pergunta_ambiente: "Normal", pergunta_retorno: "Com certeza!", comentario: "Comida gostosa, mas o ambiente estava um pouco barulhento." },
+      { id: 3, created_at: new Date(Date.now() - 3600000).toISOString(), cliente_nome: "Ana Pereira", pergunta_atendimento: "Excelente", pergunta_comida: "Incrível!", pergunta_ambiente: "Impecável!", pergunta_retorno: "Com certeza!", comentario: "Melhor restaurante da cidade!" },
+      { id: 4, created_at: new Date().toISOString(), cliente_nome: "José Silva", pergunta_atendimento: "Regular", pergunta_comida: "Não gostei", pergunta_ambiente: "Sujo/Desorganizado", pergunta_retorno: "Não", comentario: "Demorou muito para servir o prato." }
+    ];
+
+    // Configuração das Perguntas
+    const questions = [
+      {
+        field: "pergunta_atendimento",
+        text: "Como foi o seu atendimento hoje?",
+        options: [
+          { value: "Ruim", emoji: "🙁", label: "Ruim" },
+          { value: "Regular", emoji: "😐", label: "Regular" },
+          { value: "Excelente", emoji: "😊", label: "Excelente" }
+        ]
+      },
+      {
+        field: "pergunta_comida",
+        text: "O que você achou da nossa comida?",
+        options: [
+          { value: "Não gostei", emoji: "😞", label: "Não gostei" },
+          { value: "Gostei", emoji: "😊", label: "Gostei" },
+          { value: "Incrível!", emoji: "😍", label: "Incrível!" }
+        ]
+      },
+      {
+        field: "pergunta_ambiente",
+        text: "Como estava o ambiente do restaurante?",
+        options: [
+          { value: "Sujo/Desorganizado", emoji: "🧹", label: "Sujo" },
+          { value: "Normal", emoji: "😐", label: "Normal" },
+          { value: "Impecável!", emoji: "✨", label: "Impecável!" }
+        ]
+      },
+      {
+        field: "pergunta_retorno",
+        text: "Você voltaria a comer conosco?",
+        options: [
+          { value: "Não", emoji: "❌", label: "Não" },
+          { value: "Com certeza!", emoji: "🚀", label: "Com certeza!" }
+        ]
+      }
+    ];
+
+    let currentQuestionIdx = 0;
+    let answers = {};
+
+    function startSurvey() {
+      document.getElementById('step-welcome').classList.add('hidden');
+      document.getElementById('step-questions').classList.remove('hidden');
+      currentQuestionIdx = 0;
+      answers = {};
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      const q = questions[currentQuestionIdx];
+      document.getElementById('question-title').innerText = q.text;
+      document.getElementById('question-progress-text').innerText = `Etapa ${currentQuestionIdx + 1} de ${questions.length}`;
+      
+      const percent = ((currentQuestionIdx + 1) / questions.length) * 100;
+      document.getElementById('question-progress-bar').style.width = `${percent}%`;
+
+      const optionsDiv = document.getElementById('options-container');
+      optionsDiv.innerHTML = '';
+      
+      // Ajustar colunas
+      if (q.options.length === 2) {
+        optionsDiv.className = "grid grid-cols-2 gap-4 mt-6";
+      } else {
+        optionsDiv.className = "grid grid-cols-3 gap-4 mt-6";
+      }
+
+      q.options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'emoji-btn p-4 rounded-2xl flex flex-col items-center justify-center border-2 border-slate-100 bg-slate-50 hover:bg-slate-100 hover:border-slate-200 transition-all';
+        btn.onclick = () => selectOption(q.field, opt.value);
+        
+        btn.innerHTML = `
+          <span class="text-4xl mb-2 select-none">${opt.emoji}</span>
+          <span class="text-xs font-bold text-slate-700 text-center line-clamp-1">${opt.label}</span>
+        `;
+        optionsDiv.appendChild(btn);
+      });
+    }
+
+    function selectOption(field, value) {
+      answers[field] = value;
+      
+      setTimeout(() => {
+        if (currentQuestionIdx < questions.length - 1) {
+          currentQuestionIdx++;
+          renderQuestion();
+        } else {
+          document.getElementById('step-questions').classList.add('hidden');
+          document.getElementById('step-comment').classList.remove('hidden');
+        }
+      }, 200);
+    }
+
+    function goBack() {
+      const isQuestions = !document.getElementById('step-questions').classList.contains('hidden');
+      const isComment = !document.getElementById('step-comment').classList.contains('hidden');
+
+      if (isComment) {
+        document.getElementById('step-comment').classList.add('hidden');
+        document.getElementById('step-questions').classList.remove('hidden');
+        currentQuestionIdx = questions.length - 1;
+        renderQuestion();
+      } else if (isQuestions) {
+        if (currentQuestionIdx > 0) {
+          currentQuestionIdx--;
+          renderQuestion();
+        } else {
+          document.getElementById('step-questions').classList.add('hidden');
+          document.getElementById('step-welcome').classList.remove('hidden');
+        }
+      }
+    }
+
+    function submitSurvey() {
+      const nomeInput = document.getElementById('client-name').value.trim();
+      const comentarioInput = document.getElementById('client-comment').value.trim();
+      
+      const novaResposta = {
+        id: mockData.length + 1,
+        created_at: new Date().toISOString(),
+        cliente_nome: nomeInput || "Anônimo",
+        pergunta_atendimento: answers.pergunta_atendimento || "N/A",
+        pergunta_comida: answers.pergunta_comida || "N/A",
+        pergunta_ambiente: answers.pergunta_ambiente || "N/A",
+        pergunta_retorno: answers.pergunta_retorno || "N/A",
+        comentario: comentarioInput || null
+      };
+
+      mockData.unshift(novaResposta); // Adiciona no início da lista
+
+      document.getElementById('step-comment').classList.add('hidden');
+      document.getElementById('step-success').classList.remove('hidden');
+      
+      // Efeito de confete
+      confetti({
+        particleCount: 100,
+        spread: 60,
+        origin: { y: 0.6 },
+        colors: ['#059669', '#34d399', '#ffffff']
+      });
+    }
+
+    function resetSurvey() {
+      document.getElementById('client-name').value = '';
+      document.getElementById('client-comment').value = '';
+      document.getElementById('step-success').classList.add('hidden');
+      document.getElementById('step-welcome').classList.remove('hidden');
+    }
+
+    // ROTAS DO ADMIN
+    function goToAdmin() {
+      // Oculta todas as telas do cliente
+      document.getElementById('step-welcome').classList.add('hidden');
+      document.getElementById('step-questions').classList.add('hidden');
+      document.getElementById('step-comment').classList.add('hidden');
+      document.getElementById('step-success').classList.add('hidden');
+      document.getElementById('step-admin-dashboard').classList.add('hidden');
+      
+      document.getElementById('step-admin-login').classList.remove('hidden');
+      document.getElementById('admin-pass').value = '';
+      document.getElementById('login-error').classList.add('hidden');
+    }
+
+    function tryLogin() {
+      const pass = document.getElementById('admin-pass').value;
+      if (pass === 'admin123') {
+        document.getElementById('step-admin-login').classList.add('hidden');
+        document.getElementById('step-admin-dashboard').classList.remove('hidden');
+        renderDashboard();
+      } else {
+        document.getElementById('login-error').classList.remove('hidden');
+      }
+    }
+
+    function exitAdmin() {
+      document.getElementById('step-admin-dashboard').classList.add('hidden');
+      document.getElementById('step-admin-login').classList.add('hidden');
+      document.getElementById('step-welcome').classList.remove('hidden');
+    }
+
+    function renderDashboard() {
+      const total = mockData.length;
+      document.getElementById('stat-total').innerText = total;
+
+      // Calcular % que voltaria
+      const voltariam = mockData.filter(x => x.pergunta_retorno === 'Com certeza!').length;
+      const pctVoltar = total > 0 ? Math.round((voltariam / total) * 100) : 0;
+      document.getElementById('stat-return').innerText = `${pctVoltar}%`;
+
+      // Calcular % satisfação (Excelente no atendimento)
+      const excelente = mockData.filter(x => x.pergunta_atendimento === 'Excelente').length;
+      const regular = mockData.filter(x => x.pergunta_atendimento === 'Regular').length;
+      const ruim = mockData.filter(x => x.pergunta_atendimento === 'Ruim').length;
+      const pctSat = total > 0 ? Math.round((excelente / total) * 100) : 0;
+      document.getElementById('stat-sat').innerText = `${pctSat}%`;
+
+      // Atualizar Gráfico Atendimento
+      document.getElementById('chart-exc').innerText = `${excelente} votos (${total > 0 ? Math.round(excelente/total*100) : 0}%)`;
+      document.getElementById('bar-exc').style.width = `${total > 0 ? (excelente/total*100) : 0}%`;
+      
+      document.getElementById('chart-reg').innerText = `${regular} votos (${total > 0 ? Math.round(regular/total*100) : 0}%)`;
+      document.getElementById('bar-reg').style.width = `${total > 0 ? (regular/total*100) : 0}%`;
+
+      document.getElementById('chart-ruim').innerText = `${ruim} votos (${total > 0 ? Math.round(ruim/total*100) : 0}%)`;
+      document.getElementById('bar-ruim').style.width = `${total > 0 ? (ruim/total*100) : 0}%`;
+
+      // Renderizar Tabela
+      const tableDiv = document.getElementById('table-container');
+      tableDiv.innerHTML = '';
+      
+      mockData.forEach(item => {
+        const date = new Date(item.created_at).toLocaleString('pt-BR', {
+          day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+        });
+
+        const card = document.createElement('div');
+        card.className = "bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs space-y-1.5";
+        card.innerHTML = `
+          <div class="flex justify-between font-bold text-slate-800">
+            <span>${item.cliente_nome}</span>
+            <span class="text-[10px] text-slate-400 font-normal">${date}</span>
+          </div>
+          <div class="grid grid-cols-4 gap-1 text-[10px] text-slate-500 font-semibold bg-white/50 p-1 rounded border border-slate-100">
+            <div>Atend: ${item.pergunta_atendimento}</div>
+            <div>Comida: ${item.pergunta_comida}</div>
+            <div>Amb: ${item.pergunta_ambiente}</div>
+            <div>Volta: ${item.pergunta_retorno === 'Com certeza!' ? 'Sim' : 'Não'}</div>
+          </div>
+          ${item.comentario ? `<p class="text-[11px] text-slate-600 italic">"${item.comentario}"</p>` : ''}
+        `;
+        tableDiv.appendChild(card);
+      });
+    }
+
+    // Download de Planilha CSV
+    function downloadCSV() {
+      const headers = ["Data", "Cliente", "Atendimento", "Comida", "Ambiente", "Voltaria", "Comentario"];
+      const rows = mockData.map(x => [
+        new Date(x.created_at).toLocaleString('pt-BR'),
+        x.cliente_nome,
+        x.pergunta_atendimento,
+        x.pergunta_comida,
+        x.pergunta_ambiente,
+        x.pergunta_retorno,
+        x.comentario || ""
+      ]);
+
+      const csvContent = [
+        headers.join(";"),
+        ...rows.map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(";"))
+      ].join("\n");
+
+      const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = "respostas_pesquisa_simulador.csv";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  </script>
+</body>
+</html>
