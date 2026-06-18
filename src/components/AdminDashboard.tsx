@@ -304,15 +304,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
     try {
       const { error } = await supabase
         .from('configuracoes_sistema')
-        .upsert({
-          id: 1,
+        .update({
           restaurant_name: restaurantName,
           welcome_title: welcomeTitle,
           welcome_description: welcomeDescription,
           thanks_title: thanksTitle,
           thanks_description: thanksDescription,
           logo_url: logoUrl
-        });
+        })
+        .eq('id', 1);
 
       if (error) throw error;
       alert('Configurações salvas com sucesso! O site principal dos seus clientes já está atualizado em tempo real.');
