@@ -16,8 +16,9 @@ export const SurveyForm: React.FC<SurveyFormProps> = () => {
     welcome_description: surveyConfig.welcomeDescription,
     thanks_title: surveyConfig.thanksTitle,
     thanks_description: surveyConfig.thanksDescription,
-    logo_url: surveyConfig.logoUrl
+    logo_url: '' // Inicializa em branco para não piscar a foto antiga do Unsplash
   });
+  const [isLoadingConfig, setIsLoadingConfig] = useState(true);
 
   useEffect(() => {
     const fetchConfig = async () => {
@@ -40,6 +41,8 @@ export const SurveyForm: React.FC<SurveyFormProps> = () => {
         }
       } catch (err) {
         console.warn('Erro ao carregar configurações dinâmicas:', err);
+      } finally {
+        setIsLoadingConfig(false);
       }
     };
 
@@ -166,7 +169,12 @@ export const SurveyForm: React.FC<SurveyFormProps> = () => {
       <header className="text-center mb-6">
         <div className="inline-block relative">
           <div className="w-28 h-28 mx-auto rounded-2xl overflow-hidden border-2 border-brand-500 shadow-md bg-white flex items-center justify-center">
-            {config.logo_url ? (
+            {isLoadingConfig ? (
+              // Esqueleto piscando enquanto carrega a configuração
+              <div className="w-full h-full bg-slate-50 flex items-center justify-center animate-pulse">
+                <RefreshCw className="w-7 h-7 text-slate-350 text-slate-400 animate-spin" />
+              </div>
+            ) : config.logo_url ? (
               <img 
                 src={config.logo_url} 
                 alt="Logo do Restaurante" 
